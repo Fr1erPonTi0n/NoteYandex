@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QListWidget,
-                             QMenu, QApplication, QHBoxLayout)
+                             QMenu, QApplication, QHBoxLayout, QDialog, QSizePolicy)
 from PyQt6.QtGui import QAction, QIcon
 
 
@@ -33,16 +33,21 @@ class NotepadApp(QMainWindow):
                 }'''
         self.setWindowTitle("Блокнот")
         self.setGeometry(100, 100, 800, 600)
-        self.setWindowIcon(QIcon("assets/icon.png"))
+        self.setWindowIcon(QIcon("assets/main.png"))
 
         # Элементы управления
         self.createCategory = QPushButton("Создать категорию")
+        self.createCategory.setFixedHeight(30)
         self.deleteCategory = QPushButton("Удалить категорию")
+        self.deleteCategory.setFixedHeight(30)
         self.editFile = QTextEdit()
         self.filterFiles = QComboBox()
+        self.filterFiles.setFixedHeight(30)
         self.foundFile = QTextEdit()
+        self.foundFile.setFixedHeight(30)
         self.listFiles = QListWidget()
         self.nameEdit = QTextEdit()
+        self.nameEdit.setFixedHeight(30)
 
         # Центральный виджет
         wid = QWidget()
@@ -54,20 +59,19 @@ class NotepadApp(QMainWindow):
         hl_3 = QHBoxLayout()
         main_v = QVBoxLayout()
 
-        hl_1.addWidget(self.filterFiles)
-        hl_1.addWidget(self.deleteCategory)
-        hl_1.addWidget(self.createCategory)
+        hl_1.addWidget(self.filterFiles, 2)
+        hl_1.addWidget(self.deleteCategory, 2)
+        hl_1.addWidget(self.createCategory, 2)
 
         hl_2.addWidget(self.foundFile, 2)
-        hl_2.addWidget(self.nameEdit, 3)
+        hl_2.addWidget(self.nameEdit, 4)
 
         hl_3.addWidget(self.listFiles, 2)
-        hl_3.addWidget(self.editFile, 3)
+        hl_3.addWidget(self.editFile, 4)
 
         # Добавление элементов в макет
         main_v.addLayout(hl_1)
         main_v.addLayout(hl_2)
-
         main_v.addLayout(hl_3)
 
         # Создание меню
@@ -92,13 +96,18 @@ class NotepadApp(QMainWindow):
         self.menuMenu.addAction(self.actionCreate_File)
         self.menuMenu.addAction(self.actionDelete_File)
 
-        # Действия для изменения масштаба текста в editFile
-        self.actionDecrease = QAction("Уменьшить текст", self)
-        self.actionIncrease = QAction("Увеличить текст", self)
-
         wid.setLayout(main_v)
 
         # Подключение всех кнопок и т.д.
+        self.actionFile_info.triggered.connect(self.fileinfo_clicked)
+
+    def fileinfo_clicked(self):
+        print("вывод информации о файле")
+        dlg = QDialog(self)
+        dlg.setWindowIcon(QIcon("assets/info.png"))
+        dlg.resize(400, 300)
+        dlg.setWindowTitle("Информация о файле")
+        dlg.exec()
 
 
 def except_hook(cls, exception, traceback):
