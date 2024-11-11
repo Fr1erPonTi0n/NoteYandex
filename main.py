@@ -1,7 +1,22 @@
 import sys
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QListWidget,
-                             QMenu, QApplication, QHBoxLayout, QDialog, QSizePolicy)
+                             QMenu, QApplication, QHBoxLayout, QDialog, QLabel)
 from PyQt6.QtGui import QAction, QIcon
+
+
+class InfoFile(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon("assets/info.png"))
+        self.resize(400, 300)
+        self.setWindowTitle("Информация о файле")
+
+        self.layout = QVBoxLayout()
+        self.text = QLabel('!!!!')
+        self.layout.addWidget(self.text)
+        self.setLayout(self.layout)
+
+        self.exec()
 
 
 class NotepadApp(QMainWindow):
@@ -19,17 +34,11 @@ class NotepadApp(QMainWindow):
                 }
 
                 menubar - (QMenuBar) = {
-
                 menuMenu - (QMenu) = {actionOpen_File - Открывает файл (QAction);
-                actionExit_File - Выходит из файла (QAction);
                 actionSave_File - Сохраняет файл (QAction);
                 actionCreate_File - Создает новый файл (QAction);
                 actionDelete_Fire - Удаляет файл (QAction);
                 actionFile_info - Вывод информации о файле (QAction)}
-
-                menuView - (QMenu) : 
-                menuScale - (QMenu) = {actionDecrease = Уменьшение текста в editFile (QAction);
-                actionIncrease = Увеличение текста в editFile (QAction)}
                 }'''
         self.setWindowTitle("Блокнот")
         self.setGeometry(100, 100, 800, 600)
@@ -103,11 +112,7 @@ class NotepadApp(QMainWindow):
 
     def fileinfo_clicked(self):
         print("вывод информации о файле")
-        dlg = QDialog(self)
-        dlg.setWindowIcon(QIcon("assets/info.png"))
-        dlg.resize(400, 300)
-        dlg.setWindowTitle("Информация о файле")
-        dlg.exec()
+        InfoFile()
 
 
 def except_hook(cls, exception, traceback):
