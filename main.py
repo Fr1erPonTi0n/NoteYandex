@@ -1,7 +1,8 @@
 import sys
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QListWidget,
-                             QMenu, QApplication, QHBoxLayout, QDialog, QLabel)
+                             QMenu, QApplication, QHBoxLayout, QDialog, QLabel, QDialogButtonBox)
 from PyQt6.QtGui import QAction, QIcon
+from base import Base
 
 
 class InfoFile(QDialog):
@@ -18,6 +19,44 @@ class InfoFile(QDialog):
 
         self.exec()
 
+class RenameFile(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon("assets/info.png"))
+        self.resize(400, 300)
+        self.setWindowTitle("Изменение имени")
+        self.setFixedHeight(100)
+
+        QBtn = QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+        self.message = QTextEdit()
+        self.message.setFixedHeight(30)
+        self.layout.addWidget(self.message)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+
+class Choice(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon("assets/info.png"))
+        self.resize(400, 300)
+        self.setWindowTitle('Открыть файл')
+        self.setFixedHeight(100)
+
+        QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.layout = QVBoxLayout()
+        message = QLabel("Вы точно открыть файл?")
+        self.layout.addWidget(message)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
 
 class NotepadApp(QMainWindow):
     def __init__(self):
@@ -96,9 +135,11 @@ class NotepadApp(QMainWindow):
         self.actionCreate_File = QAction("Создать новый файл", self)
         self.actionDelete_File = QAction("Удалить файл", self)
         self.actionFile_info = QAction("Информация о файле", self)
+        self.actionRename_file = QAction("Изменить имя файла", self)
 
         # Добавление действий в меню "Файл"
         self.menuMenu.addAction(self.actionFile_info)
+        self.menuMenu.addAction(self.actionRename_file)
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionOpen_File)
         self.menuMenu.addAction(self.actionSave_File)
@@ -109,12 +150,44 @@ class NotepadApp(QMainWindow):
 
         # Подключение всех кнопок и т.д.
         self.actionFile_info.triggered.connect(self.fileinfo_clicked)
+        self.actionRename_file.triggered.connect(self.rename_file)
+        self.actionSave_File.triggered.connect(self.save_file)
+        self.actionOpen_File.triggered.connect(self.open_file)
 
     def fileinfo_clicked(self):
-        print("вывод информации о файле")
-        InfoFile()
+        if self.sender() == self.actionFile_info:
+            print("вывод информации о файле")
+            InfoFile()
 
+    def rename_file(self):
+        print("Изменение имени файла")
+        if self.sender() == self.actionRename_file:
+            if RenameFile().exec():
+                print("да!")
+            else:
+                print("нет!")
+    def save_file(self):
+        if self.nameEdit != "" and self.sender() == self.actionSave_File:
+            with open(f'notes/{self.nameEdit.toPlainText()}', "w", encoding="utf-8") as file:
+                plain_text = self.editFile.toPlainText()
+                file.write(plain_text)
 
+    def open_file(self):
+        if self.sender() == self.actionOpen_File:
+            try:
+                with open(f'notes/{self.nameEdit.toPlainText()}', "r", encoding="utf-8") as file:
+                    data = file.read()
+                    if data != self.editFile.toPlainText() and '' != self.editFile.toPlainText():
+                        if Choice().exec():
+                            self.editFile.setPlainText(data)
+                        else:
+                            pass
+            except:
+                print('не найден файл')
+
+    def new_file(self):
+        if self.sender() == self.actionCreate_File:
+            pass
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
 
