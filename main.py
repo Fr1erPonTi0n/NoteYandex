@@ -11,19 +11,43 @@ def is_valid_filename(filename):
     return re.match(pattern_without_extension, filename) or re.match(pattern_with_extension, filename)
 
 
+class Error(QDialog):
+    def __init__(self, error):
+        super().__init__()
+        self.setWindowIcon(QIcon("assets/info.png"))
+        self.resize(400, 300)
+        self.setWindowTitle("Ошибка")
+        self.setFixedHeight(150)
+
+        self.layout = QVBoxLayout()
+        self.message = QLabel(f"Ошибка: {error}")
+        self.layout.addWidget(self.message)
+        self.close_button = QPushButton("Закрыть")
+        self.close_button.clicked.connect(self.accept)
+        self.close_button.setFixedHeight(30)
+        self.layout.addWidget(self.close_button)
+        self.setLayout(self.layout)
+
+
 class InfoFile(QDialog):
-    def __init__(self):
+    def __init__(self, filename):
         super().__init__()
         self.setWindowIcon(QIcon("assets/info.png"))
         self.resize(400, 300)
         self.setWindowTitle("Информация о файле")
+        self.filename = filename
 
         self.layout = QVBoxLayout()
-        self.text = QLabel('!!!!')
-        self.layout.addWidget(self.text)
+        self.text1 = QLabel(f'Имя файла: {self.filename}')
+        self.text2 = QLabel(f'Количество строк файла: {self.count_lines}')  # Проблема
+        self.layout.addWidget(self.text1)
+        self.layout.addWidget(self.text2)
         self.setLayout(self.layout)
         self.exec()
 
+    def count_lines(self):
+        with open(self.filename, 'r') as file:
+            return len(file.readlines())
 
 class RenameFile(QDialog):
     def __init__(self):
@@ -33,8 +57,8 @@ class RenameFile(QDialog):
         self.setWindowTitle("Изменение имени")
         self.setFixedHeight(100)
 
-        QBtn = QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
-        self.buttonBox = QDialogButtonBox(QBtn)
+        self.qBtn = QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(self.qBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -57,13 +81,13 @@ class ChoiceOpenFile(QDialog):
         self.setWindowTitle('Открыть файл')
         self.setFixedHeight(100)
 
-        QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        self.buttonBox = QDialogButtonBox(QBtn)
+        self.qBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(self.qBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
         self.layout = QVBoxLayout()
-        message = QLabel("Вы точно хотите открыть файл, не сохранив этот вариант?")
-        self.layout.addWidget(message)
+        self.message = QLabel("Вы точно хотите открыть файл, не сохранив этот вариант?")
+        self.layout.addWidget(self.message)
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
@@ -76,8 +100,8 @@ class CreateFile(QDialog):
         self.setWindowTitle('Создание файла')
         self.setFixedHeight(160)
 
-        QBtn = QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
-        self.buttonBox = QDialogButtonBox(QBtn)
+        self.qBtn = QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(self.qBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -106,13 +130,13 @@ class DeleteFile(QDialog):
         self.setWindowTitle('Открыть файл')
         self.setFixedHeight(100)
 
-        QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        self.buttonBox = QDialogButtonBox(QBtn)
+        self.qBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(self.qBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
         self.layout = QVBoxLayout()
-        message = QLabel("Вы точно хотите удалить файл?")
-        self.layout.addWidget(message)
+        self.message = QLabel("Вы точно хотите удалить файл?")
+        self.layout.addWidget(self.message)
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
@@ -218,8 +242,17 @@ class NotepadApp(QMainWindow):
 
     def fileinfo_clicked(self):
         if self.sender() == self.actionFile_info:
-            print("Вывод информации о файле")
-            InfoFile()
+            try:
+                print("Вывод информации о файле")
+                filename = self.nameEdit.toPlainText()
+                if not is_valid_filename(filename):
+                    raise Exception
+                if not filename.lower().endswith('.txt'):
+                    filename += '.txt'
+                InfoFile(filename)
+                self.nameEdit.setText(filename)
+            except Exception:
+                Error('ошибка при открытии информации файла').exec()
 
     def rename_file(self):
         print("Изменение имени файла")
@@ -241,23 +274,31 @@ class NotepadApp(QMainWindow):
                     os.rename(current_file_path, new_file_path)
                     self.nameEdit.setText(new_name)
                 except:
-                    print('Ошибка замены файла')
+                    Error('ошибка замены имени файла').exec()
+                    self.editFile.setText('')
+                    self.nameEdit.setText('')
 
     def save_file(self):
         if self.nameEdit != "" and self.sender() == self.actionSave_File:
             try:
-                with open(f'notes/{self.nameEdit.toPlainText()}', "w", encoding="utf-8") as file:
+                filename = self.nameEdit.toPlainText()
+                if not is_valid_filename(filename):
+                    raise Exception
+                if not filename.lower().endswith('.txt'):
+                    filename += '.txt'
+                with open(f'notes/{filename}', "w", encoding="utf-8") as file:
                     plain_text = self.editFile.toPlainText()
                     file.write(plain_text)
-            except:
-                print('Что-то не то с сохранением')
+                    self.nameEdit.setText(filename)
+            except Exception:
+                Error('что-то не то с сохранением').exec()
 
     def open_file(self):
         if self.sender() == self.actionOpen_File:
             try:
                 filename = self.nameEdit.toPlainText()
                 if not is_valid_filename(filename):
-                    print("Имя файла должно соответствовать шаблонам 'text' или 'text.txt'.")
+                    print("имя файла должно соответствовать шаблонам 'text' или 'text.txt'.")
                 if not filename.lower().endswith('.txt'):
                     filename += '.txt'
                 with (open(f'notes/{filename}', "r", encoding="utf-8") as file):
@@ -270,7 +311,9 @@ class NotepadApp(QMainWindow):
                     self.later = self.editFile.toPlainText()
                     self.nameEdit.setText(filename)
             except:
-                print('Не найден файл')
+                Error('не найден файл').exec()
+                self.editFile.setText('')
+                self.nameEdit.setText('')
 
     def create_file(self):
         if self.sender() == self.actionCreate_File:
@@ -279,18 +322,20 @@ class NotepadApp(QMainWindow):
                 filename, category = create_file.get_input()
                 if filename and category:
                     if not is_valid_filename(filename):
-                        print("Имя файла должно соответствовать шаблонам 'text' или 'text.txt'.")
+                        print("имя файла должно соответствовать шаблонам 'text' или 'text.txt'.")
                     if not filename.lower().endswith('.txt'):
                         filename += '.txt'
                     print(f"Создан '{filename}' в категории '{category}'.")
                     self.nameEdit.setText(filename)
+                    self.editFile.setText('')
                     try:
                         with open(f'notes/{filename}', "w", encoding="utf-8"):
                             pass
                     except:
-                        print('Что-то не то с сохранением')
+                        Error('что-то не то с сохранением').exec()
                 else:
-                    print("Имя файла и категория не могут быть пустыми.")
+                    Error('имя файла и категория не могут быть пустыми.').exec()
+
 
     def delete_file(self):
         if self.sender() == self.actionDelete_File:
@@ -304,10 +349,8 @@ class NotepadApp(QMainWindow):
                     os.remove(file_path)
                     self.nameEdit.setText('')
                     self.editFile.setText('')
-                else:
-                    print('Файл не удалён')
             except:
-                print('Ошибка при удалении')
+                Error('Ошибка при удалении').exec()
 
 
 def except_hook(cls, exception, traceback):
